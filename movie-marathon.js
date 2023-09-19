@@ -45,4 +45,4 @@ parseMovies(
     new Date(0, 0)
 )
 
-log('Total rating: ', totalRating.toFixed(1))
+log('Total rating:', totalRating.toFixed(1))
