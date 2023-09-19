@@ -20,7 +20,7 @@ let parseMovies = (remainingMovies, runTime) => {
     let paired = remainingMovies.filter(m => m.avgRating >= 0.07)
         .find(m2 => (movie.dur + m2.dur) % 60 == 0)
 
-    if (((!mod || mod >= 55) || (mod >= 45 && !paired)) && addMins(runTime, movie.dur).getDay() == 1) {
+    if (((!mod || mod >= 56) || (mod >= 50 && !paired)) && addMins(runTime, movie.dur).getDay() == 1) {
         return parseMovies(
             remainingMovies,
             addMins(printMovies(runTime, movie), mod ? 60 - mod : 0)
