@@ -1,0 +1,15 @@
+{
+  "name": "code-golf-2023",
+  "version": "1.0.0",
+  "description": "",
+  "main": "movie-marathon.js",
+  "scripts": {
+    "min": "uglifyjs -c -m toplevel --mangle-props -o movie-marathon.min.js -- movie-marathon.js",
+    "min-gpt": "uglifyjs -c -m toplevel --mangle-props -o movie-marathon-gpt.min.js -- movie-marathon-gpt.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "uglify-js": "^3.17.4"
+  }
+}
