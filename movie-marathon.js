@@ -1,7 +1,7 @@
 let fs = require('fs')
 
 let addMins = (date, minutes) => new Date(date.getTime() + minutes * 60000)
-let { format } = new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+let format = date => `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 let log = console.log
 let totalRating = 0
 let printMovies = (runTime, ...movies) => movies.reduce((_, movie) => {
