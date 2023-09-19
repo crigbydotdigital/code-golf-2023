@@ -1,48 +1,48 @@
 let fs = require('fs')
 
 let addMins = (date, minutes) => new Date(date.getTime() + minutes * 60000)
-
-let movies = JSON.parse(fs.readFileSync('m')).map((movie, i) => ({
-    i,
-    ...movie,
-    dur: movie.Duration,
-    avgRating: movie.Rating / movie.Duration
-})).sort((a, b) => b.avgRating - a.avgRating)
-
-let schedule = []
-let totalDuration = 0
-
-movies.forEach(movie => {
-    let { i, dur } = movie
-    if (schedule.some(m => m.i == i)) return
-
-    let mod = dur % 60
-    let paired = movies.filter(m => m.avgRating >= 0.07 && m.i != i && !schedule.some(x => x.i == m.i))
-        .find(m2 => (dur + m2.dur) % 60 == 0)
-
-    if (((mod == 0 || mod >= 55) || (mod >= 45 && !paired)) && totalDuration + dur <= 1440) {
-        schedule.push(movie)
-        totalDuration += mod == 0 ? dur : dur + (60 - mod)
-    } else if (paired && totalDuration + dur + paired.dur <= 1440) {
-        schedule.push(movie, paired)
-        totalDuration += dur + paired.dur
-    }
-})
-
-let runTime = new Date(0, 0)
-
 let { format } = new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 let log = console.log
-
-schedule.forEach(m => {
-    let minMod = runTime.getMinutes() % 60
-    let minDiff = minMod == 0 ? 0 : 60 - minMod
-    let startTime = minDiff > 0 && addMins(runTime, m.dur).getMinutes() != 0 ? addMins(runTime, minDiff) : runTime
-    let endTime = addMins(startTime, m.dur)
-
-    log(`${m.Title} (${m.Rating}) ${format(startTime)}-${format(endTime)}`)
-
+let totalRating = 0
+let printMovies = (runTime, ...movies) => movies.reduce((_, movie) => {
+    let endTime = addMins(runTime, movie.dur)
+    log(`${movie.Title} (${movie.Rating}) ${format(runTime)}-${format(endTime)}`)
+    totalRating += movie.Rating
     runTime = endTime
-})
+    return endTime
+}, 0)
 
-log('Total rating: ', schedule.reduce((acc, movie) => acc + movie.Rating, 0).toFixed(1))
+let parseMovies = (remainingMovies, runTime) => {
+    if (!remainingMovies.length) return
+
+    let movie = remainingMovies.shift()
+    let mod = movie.dur % 60
+    let paired = remainingMovies.filter(m => m.avgRating >= 0.07)
+        .find(m2 => (movie.dur + m2.dur) % 60 == 0)
+
+    if (((!mod || mod >= 55) || (mod >= 45 && !paired)) && addMins(runTime, movie.dur).getDay() == 1) {
+        return parseMovies(
+            remainingMovies,
+            addMins(printMovies(runTime, movie), mod ? 60 - mod : 0)
+        )
+    } else if (paired && addMins(runTime, movie.dur + paired.dur).getDay() == 1) {
+        return parseMovies(
+            remainingMovies.filter(m => m.i != paired.i),
+            printMovies(runTime, movie, paired)
+        )
+    }
+
+    return parseMovies(remainingMovies, runTime)
+}
+
+parseMovies(
+    JSON.parse(fs.readFileSync('m')).map((movie, i) => ({
+        i,
+        ...movie,
+        dur: movie.Duration,
+        avgRating: movie.Rating / movie.Duration
+    })).sort((a, b) => b.avgRating - a.avgRating),
+    new Date(0, 0)
+)
+
+log('Total rating: ', totalRating.toFixed(1))
